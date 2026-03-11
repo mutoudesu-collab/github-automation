@@ -8,7 +8,7 @@
     "dep-upgrade": "ts-node src/dep-upgrade/index.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.37.0",
+    "openai": "^4.0.0",
     "@octokit/rest": "^21.0.0"
   },
   "devDependencies": {

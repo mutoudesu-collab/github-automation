@@ -1,15 +1,15 @@
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 
-export function createClient(): Anthropic {
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set')
-  return new Anthropic({ apiKey })
+export function createClient(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) throw new Error('OPENAI_API_KEY is not set')
+  return new OpenAI({ apiKey })
 }
 
 export const MODELS = {
-  review: 'claude-haiku-4-5-20251001',
-  agent: 'claude-sonnet-4-6',
-  depFix: 'claude-haiku-4-5-20251001',
+  review: 'gpt-4o-mini',
+  agent: 'gpt-4o',
+  depFix: 'gpt-4o-mini',
 } as const
 
 export const AGENT_MAX_TURNS = 20

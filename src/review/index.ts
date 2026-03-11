@@ -3,7 +3,7 @@ import { createClient, MODELS } from '../lib/anthropic'
 import { createOctokit, getRepoCreds, postPRReview } from '../lib/github'
 import { buildReviewPrompt } from '../lib/prompts'
 
-const DIFF_SIZE_LIMIT = 100_000 // 100KB
+const DIFF_SIZE_LIMIT = 100_000
 
 interface ReviewIssue {
   severity: 'critical' | 'warning' | 'suggestion'
@@ -43,19 +43,20 @@ async function main() {
   }
 
   const client = createClient()
-  const response = await client.messages.create({
+  const response = await client.chat.completions.create({
     model: MODELS.review,
     max_tokens: 4096,
+    response_format: { type: 'json_object' },
     messages: [{ role: 'user', content: buildReviewPrompt(diff, prTitle, prBody) }],
   })
 
-  const text = response.content.find(b => b.type === 'text')?.text ?? ''
+  const text = response.choices[0].message.content ?? ''
   let result: ReviewResult
 
   try {
     result = JSON.parse(text)
   } catch {
-    throw new Error(`Failed to parse Claude response as JSON:\n${text}`)
+    throw new Error(`Failed to parse GPT response as JSON:\n${text}`)
   }
 
   const body = formatReviewBody(result)

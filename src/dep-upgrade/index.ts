@@ -1,5 +1,5 @@
 import { execSync, ExecSyncOptionsWithStringEncoding } from 'child_process'
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { createClient, MODELS, AGENT_MAX_TURNS } from '../lib/anthropic'
 import {
   createOctokit,
@@ -23,46 +23,55 @@ interface FileChange {
 }
 
 interface AgentState {
-  messages: Anthropic.MessageParam[]
+  messages: OpenAI.ChatCompletionMessageParam[]
   changes: FileChange[]
   summary: string
   turns: number
   done: boolean
 }
 
-const tools: Anthropic.Tool[] = [
+const tools: OpenAI.ChatCompletionTool[] = [
   {
-    name: 'read_file',
-    description: 'Read the contents of a file',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        path: { type: 'string', description: 'File path relative to repository root' },
+    type: 'function',
+    function: {
+      name: 'read_file',
+      description: 'Read the contents of a file',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'File path relative to repository root' },
+        },
+        required: ['path'],
       },
-      required: ['path'],
     },
   },
   {
-    name: 'write_file',
-    description: 'Write or update a file',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        path: { type: 'string', description: 'File path relative to repository root' },
-        content: { type: 'string', description: 'File content to write' },
+    type: 'function',
+    function: {
+      name: 'write_file',
+      description: 'Write or update a file',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'File path relative to repository root' },
+          content: { type: 'string', description: 'File content to write' },
+        },
+        required: ['path', 'content'],
       },
-      required: ['path', 'content'],
     },
   },
   {
-    name: 'finish',
-    description: 'Signal that fixes are complete',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        summary: { type: 'string', description: 'Summary of fixes applied (in Japanese)' },
+    type: 'function',
+    function: {
+      name: 'finish',
+      description: 'Signal that fixes are complete',
+      parameters: {
+        type: 'object',
+        properties: {
+          summary: { type: 'string', description: 'Summary of fixes applied (in Japanese)' },
+        },
+        required: ['summary'],
       },
-      required: ['summary'],
     },
   },
 ]
@@ -99,35 +108,36 @@ function executeTool(name: string, input: Record<string, string>, state: AgentSt
   }
 }
 
-async function runFixLoop(client: Anthropic, prompt: string, state: AgentState): Promise<void> {
+async function runFixLoop(client: OpenAI, prompt: string, state: AgentState): Promise<void> {
   state.messages.push({ role: 'user', content: prompt })
 
   while (!state.done && state.turns < AGENT_MAX_TURNS) {
     state.turns++
     console.log(`Fix turn ${state.turns}/${AGENT_MAX_TURNS}`)
 
-    const response = await client.messages.create({
+    const response = await client.chat.completions.create({
       model: MODELS.depFix,
       max_tokens: 8192,
       tools,
       messages: state.messages,
     })
 
-    const assistantContent = response.content
-    state.messages.push({ role: 'assistant', content: assistantContent })
+    const message = response.choices[0].message
+    state.messages.push(message)
 
-    if (response.stop_reason === 'end_turn') break
-    if (response.stop_reason !== 'tool_use') break
+    if (response.choices[0].finish_reason === 'stop') break
+    if (response.choices[0].finish_reason !== 'tool_calls') break
 
-    const toolResults: Anthropic.ToolResultBlockParam[] = []
-    for (const block of assistantContent) {
-      if (block.type !== 'tool_use') continue
-      const result = executeTool(block.name, block.input as Record<string, string>, state)
-      toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
+    for (const toolCall of message.tool_calls ?? []) {
+      const input = JSON.parse(toolCall.function.arguments) as Record<string, string>
+      const result = executeTool(toolCall.function.name, input, state)
+      state.messages.push({
+        role: 'tool',
+        tool_call_id: toolCall.id,
+        content: result,
+      })
       if (state.done) break
     }
-
-    state.messages.push({ role: 'user', content: toolResults })
   }
 
   if (state.turns >= AGENT_MAX_TURNS && !state.done) {
