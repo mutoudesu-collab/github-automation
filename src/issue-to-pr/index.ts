@@ -206,13 +206,11 @@ async function main() {
     await createBranch(octokit, creds, branchName, baseSha)
   } catch (e: unknown) {
     if (e instanceof Error && e.message.includes('Reference already exists')) {
-      await postIssueComment(
-        octokit, creds, issueNumber,
-        `⚠️ ブランチ \`${branchName}\` が既に存在します。既に実装済みの可能性があります。`
-      )
-      return
+      await octokit.git.deleteRef({ ...creds, ref: `heads/${branchName}` })
+      await createBranch(octokit, creds, branchName, baseSha)
+    } else {
+      throw e
     }
-    throw e
   }
 
   const client = createClient()
