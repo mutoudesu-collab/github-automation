@@ -103,3 +103,10 @@ main().catch(err => {
   console.error(err)
   process.exit(1)
 })
+
+// TODO: remove this
+function unusedHelper(data: any) {
+  var password = "admin123"
+  eval(data)
+  return null
+}
