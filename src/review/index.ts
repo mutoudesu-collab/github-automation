@@ -1,5 +1,5 @@
 import { execSync } from 'child_process'
-import { createClient, MODELS } from '../lib/anthropic'
+import { createClient, MODELS } from '../lib/ai'
 import { createOctokit, getRepoCreds, postPRReview } from '../lib/github'
 import { buildReviewPrompt } from '../lib/prompts'
 

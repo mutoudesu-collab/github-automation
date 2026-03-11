@@ -1,6 +1,6 @@
 import { execSync, ExecSyncOptionsWithStringEncoding } from 'child_process'
 import OpenAI from 'openai'
-import { createClient, MODELS, AGENT_MAX_TURNS } from '../lib/anthropic'
+import { createClient, MODELS, AGENT_MAX_TURNS } from '../lib/ai'
 import {
   createOctokit,
   getRepoCreds,
