@@ -1,0 +1,19 @@
+{
+  "name": "github-automation",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "review": "ts-node src/review/index.ts",
+    "issue-to-pr": "ts-node src/issue-to-pr/index.ts",
+    "dep-upgrade": "ts-node src/dep-upgrade/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.37.0",
+    "@octokit/rest": "^21.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}
