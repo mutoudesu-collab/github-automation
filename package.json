@@ -5,7 +5,8 @@
   "scripts": {
     "review": "ts-node src/review/index.ts",
     "issue-to-pr": "ts-node src/issue-to-pr/index.ts",
-    "dep-upgrade": "ts-node src/dep-upgrade/index.ts"
+    "dep-upgrade": "ts-node src/dep-upgrade/index.ts",
+    "lint": "eslint . --ext .ts"
   },
   "dependencies": {
     "openai": "^4.0.0",
@@ -14,6 +15,9 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "ts-node": "^10.9.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.0.0"
   }
 }
