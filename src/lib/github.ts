@@ -9,6 +9,7 @@ export function createOctokit(): Octokit {
 export interface RepoCreds {
   owner: string
   repo: string
+  [key: string]: unknown
 }
 
 export function getRepoCreds(): RepoCreds {
